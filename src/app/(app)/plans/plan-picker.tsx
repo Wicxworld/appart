@@ -1,24 +1,34 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { membershipPlans, type PlanId } from "@/lib/plans";
-import { selectPlan } from "../actions";
+import { startPlanPayment } from "../actions";
 
-export function PlanPicker({ currentPlan }: { currentPlan: string | null }) {
-  const [selected, setSelected] = useState(currentPlan);
+export function PlanPicker({
+  currentPlan,
+  pendingPayment,
+}: {
+  currentPlan: string | null;
+  pendingPayment: { id: string; plan: string; status: string } | null;
+}) {
+  const router = useRouter();
   const [error, setError] = useState("");
   const [loading, setLoading] = useState<string | null>(null);
 
   async function handleSelect(planId: PlanId) {
     setError("");
     setLoading(planId);
-    const result = await selectPlan(planId);
+    const result = await startPlanPayment(planId);
     setLoading(null);
-    if (result.error) {
+    if (result.error && !result.id) {
       setError(result.error);
       return;
     }
-    setSelected(planId);
+    if (result.id) {
+      router.push(`/plans/pay/${result.id}`);
+      router.refresh();
+    }
   }
 
   return (
@@ -33,7 +43,17 @@ export function PlanPicker({ currentPlan }: { currentPlan: string | null }) {
       ) : null}
       <div className="grid gap-6 lg:grid-cols-3">
         {membershipPlans.map((plan) => {
-          const isCurrent = selected === plan.id;
+          const isCurrent = currentPlan === plan.id;
+          const pendingForPlan = pendingPayment?.plan === plan.id;
+          const awaiting = pendingForPlan && pendingPayment?.status === "awaiting_payment";
+          const reviewing = pendingForPlan && pendingPayment?.status === "pending_review";
+
+          let label = `Pay ${plan.name}`;
+          if (loading === plan.id) label = "Opening...";
+          else if (reviewing) label = "Awaiting review";
+          else if (awaiting) label = "Continue payment";
+          else if (isCurrent) label = "Current plan";
+
           return (
             <article
               key={plan.id}
@@ -47,6 +67,13 @@ export function PlanPicker({ currentPlan }: { currentPlan: string | null }) {
                 {plan.name}
               </p>
               <p className="mt-6 font-display text-5xl">{plan.priceLabel}</p>
+              <p
+                className={`mt-1 text-[11px] uppercase tracking-[0.18em] ${
+                  plan.featured ? "text-ivory/50" : "text-muted"
+                }`}
+              >
+                USD / month
+              </p>
               <p
                 className={`mt-4 text-sm leading-6 ${
                   plan.featured ? "text-ivory/70" : "text-muted"
@@ -72,19 +99,15 @@ export function PlanPicker({ currentPlan }: { currentPlan: string | null }) {
                     : "mt-10 block w-full bg-ink px-5 py-3.5 text-center text-[11px] font-semibold uppercase tracking-[0.22em] text-ivory transition hover:bg-bronze hover:text-ink disabled:opacity-50"
                 }
               >
-                {isCurrent
-                  ? "Current plan"
-                  : loading === plan.id
-                    ? "Saving..."
-                    : `Select ${plan.name}`}
+                {label}
               </button>
-              {isCurrent ? (
+              {isCurrent && !pendingForPlan ? (
                 <p
                   className={`mt-4 text-center text-xs ${
                     plan.featured ? "text-ivory/60" : "text-muted"
                   }`}
                 >
-                  Recorded on your profile. Checkout coming soon.
+                  Confirmed on your profile. Pay again to renew.
                 </p>
               ) : null}
             </article>

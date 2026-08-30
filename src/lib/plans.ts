@@ -48,6 +48,10 @@ export function isPlanId(value: string | null | undefined): value is PlanId {
   return membershipPlans.some((plan) => plan.id === value);
 }
 
+export function getPlan(id: string | null | undefined) {
+  return membershipPlans.find((plan) => plan.id === id);
+}
+
 export function planLabel(id: string | null | undefined) {
   if (!id) return "Free / none";
   return membershipPlans.find((plan) => plan.id === id)?.name ?? "Free / none";
