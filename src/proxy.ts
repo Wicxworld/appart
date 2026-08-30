@@ -1,6 +1,15 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 
+const protectedPrefixes = [
+  "/dashboard",
+  "/admin",
+  "/searches",
+  "/profile",
+  "/settings",
+  "/plans",
+];
+
 export async function proxy(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
   const code = request.nextUrl.searchParams.get("code");
@@ -52,8 +61,9 @@ export async function proxy(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  const isProtectedRoute =
-    pathname.startsWith("/dashboard") || pathname.startsWith("/admin");
+  const isProtectedRoute = protectedPrefixes.some((prefix) =>
+    pathname.startsWith(prefix),
+  );
 
   const isAuthRoute = pathname.startsWith("/auth");
 
