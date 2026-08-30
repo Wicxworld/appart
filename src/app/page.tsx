@@ -5,18 +5,18 @@ import { photos } from "@/lib/photos";
 
 const residences = [
   {
-    title: "Victoria Island penthouse",
-    location: "Lagos waterfront",
+    title: "Manhattan penthouse",
+    location: "New York",
     image: photos.penthouse,
   },
   {
-    title: "Garden residence",
-    location: "Ikoyi",
+    title: "Garden townhouse",
+    location: "Brooklyn",
     image: photos.kitchen,
   },
   {
     title: "City loft",
-    location: "Lekki Phase 1",
+    location: "Los Angeles",
     image: photos.loft,
   },
 ];
@@ -182,7 +182,7 @@ export default function Home() {
               </h2>
             </div>
             <p className="max-w-sm text-sm leading-6 text-muted">
-              From waterfront penthouses to quiet garden houses, every search
+              From Manhattan penthouses to quiet garden houses, every search
               is measured against the brief you wrote.
             </p>
           </div>

@@ -39,21 +39,21 @@ export function SearchForm() {
             id="city"
             name="city"
             required
-            placeholder="Lagos"
+            placeholder="New York"
             className={field}
           />
         </div>
 
         <div>
           <label htmlFor="budget_max" className="mb-2 block text-[11px] uppercase tracking-[0.22em] text-muted">
-            Max yearly rent (USD)
+            Max monthly rent (USD)
           </label>
           <input
             id="budget_max"
             name="budget_max"
             type="number"
             min="0"
-            placeholder="2500"
+            placeholder="4500"
             className={field}
           />
         </div>
@@ -80,7 +80,7 @@ export function SearchForm() {
             id="notes"
             name="notes"
             rows={3}
-            placeholder="Light, estate, generator, close to the island, unfurnished..."
+            placeholder="Doorman, in-unit laundry, near the subway, unfurnished..."
             className={field}
           />
         </div>

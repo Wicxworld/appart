@@ -2,6 +2,23 @@ import { type NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 
 export async function proxy(request: NextRequest) {
+  const pathname = request.nextUrl.pathname;
+  const code = request.nextUrl.searchParams.get("code");
+  const tokenHash = request.nextUrl.searchParams.get("token_hash");
+
+  if (
+    (code || tokenHash) &&
+    !pathname.startsWith("/auth/callback") &&
+    !pathname.startsWith("/auth/confirm")
+  ) {
+    const url = request.nextUrl.clone();
+    url.pathname = tokenHash ? "/auth/confirm" : "/auth/callback";
+    if (!url.searchParams.get("next")) {
+      url.searchParams.set("next", "/dashboard");
+    }
+    return NextResponse.redirect(url);
+  }
+
   let response = NextResponse.next({
     request,
   });
@@ -35,11 +52,8 @@ export async function proxy(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  const pathname = request.nextUrl.pathname;
-
   const isProtectedRoute =
-    pathname.startsWith("/dashboard") ||
-    pathname.startsWith("/admin");
+    pathname.startsWith("/dashboard") || pathname.startsWith("/admin");
 
   const isAuthRoute = pathname.startsWith("/auth");
 
@@ -55,10 +69,7 @@ export async function proxy(request: NextRequest) {
   if (isAuthRoute && user) {
     const url = request.nextUrl.clone();
 
-    if (
-      pathname === "/auth/sign-in" ||
-      pathname === "/auth/sign-up"
-    ) {
+    if (pathname === "/auth/sign-in" || pathname === "/auth/sign-up") {
       url.pathname = "/dashboard";
       url.search = "";
       return NextResponse.redirect(url);
@@ -70,8 +81,6 @@ export async function proxy(request: NextRequest) {
 
 export const config = {
   matcher: [
-    "/dashboard/:path*",
-    "/admin/:path*",
-    "/auth/:path*",
+    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
   ],
 };
