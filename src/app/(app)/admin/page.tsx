@@ -112,7 +112,7 @@ export default async function AdminPage() {
           ))}
         </div>
 
-        <section className="mt-14">
+        <section id="payments" className="mt-14 scroll-mt-28">
           <h2 className="font-display text-3xl">Payments</h2>
           <p className="mt-3 max-w-2xl text-sm leading-6 text-muted">
             Confirm a Bitcoin or Lead Bank transfer to grant the membership plan.
