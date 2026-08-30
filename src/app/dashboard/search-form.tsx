@@ -43,14 +43,14 @@ export function SearchForm() {
 
         <div>
           <label htmlFor="budget_max" className="mb-2 block text-sm font-medium">
-            Max yearly rent (NGN)
+            Max yearly rent (USD)
           </label>
           <input
             id="budget_max"
             name="budget_max"
             type="number"
             min="0"
-            placeholder="2500000"
+            placeholder="2500"
             className="w-full rounded-xl border border-white/10 bg-slate-900 px-4 py-3 text-sm outline-none transition placeholder:text-slate-600 focus:border-blue-400"
           />
         </div>
