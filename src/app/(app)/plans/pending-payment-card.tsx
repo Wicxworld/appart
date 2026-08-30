@@ -27,7 +27,7 @@ export function PendingPaymentCard({
           </p>
           <p className="mt-3 max-w-xl text-sm leading-6 text-muted">
             {awaiting
-              ? "Finish the transfer, then tell us you have sent it. Membership stays unpaid until an operator confirms."
+              ? "Choose bank transfer or Bitcoin, send the payment, then tell us you have paid. Membership stays unpaid until an operator confirms."
               : "Thank you. We have your payment and will confirm it once the transfer is visible. Membership stays unpaid until then."}
           </p>
           <p className="mt-4 text-sm">
@@ -40,7 +40,7 @@ export function PendingPaymentCard({
         href={`/plans/pay/${payment.id}`}
         className="mt-8 inline-block bg-ink px-6 py-3 text-[11px] font-semibold uppercase tracking-[0.22em] text-ivory transition hover:bg-bronze hover:text-ink"
       >
-        {awaiting ? "Continue payment" : paymentStatusLabel(payment.status)}
+        {awaiting ? "Choose payment method" : paymentStatusLabel(payment.status)}
       </Link>
     </div>
   );
