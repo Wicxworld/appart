@@ -1,8 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { FormEvent, useState } from "react";
-import { useRouter } from "next/navigation";
+import { FormEvent, Suspense, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { AuthShell } from "@/components/auth-shell";
 import { photos } from "@/lib/photos";
@@ -10,12 +10,22 @@ import { photos } from "@/lib/photos";
 const field =
   "w-full border-0 border-b border-ink/20 bg-transparent px-0 py-3 text-sm outline-none transition placeholder:text-ink/35 focus:border-bronze";
 
-export default function SignInPage() {
+function SignInPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
+  const [error, setError] = useState(() => {
+    const reason = searchParams.get("error");
+    if (reason === "authentication_failed") {
+      return "That verification link did not work. Sign in, or request a new one.";
+    }
+    if (reason === "missing_code") {
+      return "That email link was missing a login code. Request a new one from sign-in.";
+    }
+    return "";
+  });
   const [loading, setLoading] = useState(false);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -121,5 +131,14 @@ export default function SignInPage() {
         </Link>
       </p>
     </AuthShell>
+  );
+}
+
+
+export default function Page() {
+  return (
+    <Suspense>
+      <SignInPage />
+    </Suspense>
   );
 }
