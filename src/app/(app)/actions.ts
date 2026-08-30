@@ -2,11 +2,14 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
-import { getPlan, isPlanId } from "@/lib/plans";
+import { getPlan, isPlanId, planLabel } from "@/lib/plans";
+import { formatUsd } from "@/lib/format";
 import {
   createPaymentReference,
   isPaymentMethod,
+  methodLabel,
 } from "@/lib/payouts";
+import { sendPaymentMarkedEmail } from "@/lib/email";
 import type { SubscriptionPaymentRow } from "@/lib/types";
 
 const OPEN_STATUSES = ["awaiting_payment", "pending_review"] as const;
@@ -171,7 +174,7 @@ export async function markPaymentSent(formData: FormData) {
   } = await supabase.auth.getUser();
 
   if (!user) {
-    return { error: "You need to sign in first." };
+    return { error: "You need to sign in first.", warning: null };
   }
 
   const paymentId = String(formData.get("payment_id") ?? "").trim();
@@ -179,33 +182,36 @@ export async function markPaymentSent(formData: FormData) {
   const payerNote = String(formData.get("payer_note") ?? "").trim();
 
   if (!paymentId) {
-    return { error: "Payment is missing." };
+    return { error: "Payment is missing.", warning: null };
   }
 
   if (!isPaymentMethod(method)) {
-    return { error: "Choose Bitcoin or a Lead Bank transfer." };
+    return { error: "Choose Bitcoin or a Lead Bank transfer.", warning: null };
   }
 
   const { data: payment, error: loadError } = await supabase
     .from("subscription_payments")
-    .select("id, status, user_id")
+    .select("id, status, user_id, plan, amount_usd, reference")
     .eq("id", paymentId)
     .maybeSingle();
 
   if (loadError) {
-    return { error: loadError.message };
+    return { error: loadError.message, warning: null };
   }
 
   if (!payment || payment.user_id !== user.id) {
-    return { error: "Payment not found." };
+    return { error: "Payment not found.", warning: null };
   }
 
   if (payment.status === "pending_review") {
-    return { error: null };
+    return { error: null, warning: null };
   }
 
   if (payment.status !== "awaiting_payment") {
-    return { error: "This payment can no longer be marked as sent." };
+    return {
+      error: "This payment can no longer be marked as sent.",
+      warning: null,
+    };
   }
 
   const { error } = await supabase
@@ -220,9 +226,30 @@ export async function markPaymentSent(formData: FormData) {
     .eq("status", "awaiting_payment");
 
   if (error) {
-    return { error: error.message };
+    return { error: error.message, warning: null };
   }
 
   revalidateMembership();
-  return { error: null };
+
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("full_name")
+    .eq("id", user.id)
+    .maybeSingle();
+
+  const memberName =
+    (typeof profile?.full_name === "string" && profile.full_name.trim()) ||
+    user.email ||
+    "Member";
+
+  const notify = await sendPaymentMarkedEmail({
+    memberEmail: user.email ?? "unknown",
+    memberName,
+    plan: planLabel(payment.plan),
+    amountUsd: formatUsd(payment.amount_usd) ?? `$${payment.amount_usd}`,
+    method: methodLabel(method),
+    reference: payment.reference,
+  });
+
+  return { error: null, warning: notify.warning ?? null };
 }
