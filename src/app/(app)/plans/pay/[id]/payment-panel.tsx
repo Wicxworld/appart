@@ -65,7 +65,7 @@ export function PaymentPanel({
 
       <div className="mt-10 space-y-5">
         <CopyField
-          label="Payment reference"
+          label="APPART reference"
           value={payment.reference}
           hint="Include this exact reference with the transfer so we can match it."
         />
@@ -73,7 +73,6 @@ export function PaymentPanel({
         {method === "btc" ? (
           <>
             <CopyField label="BTC address" value={payouts.btc.address} />
-            <CopyField label="Network" value={payouts.btc.network} />
             <div className="border border-red-800/20 bg-red-800/5 px-4 py-3 text-sm leading-6 text-red-900">
               {payouts.btc.warning}
             </div>
@@ -170,7 +169,7 @@ export function PaymentThankYou({
         </div>
       </dl>
       <div className="mt-8">
-        <CopyField label="Payment reference" value={payment.reference} />
+        <CopyField label="APPART reference" value={payment.reference} />
       </div>
     </div>
   );
