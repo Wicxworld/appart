@@ -2,11 +2,14 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
-import { getPlan, isPlanId } from "@/lib/plans";
+import { formatUsd } from "@/lib/format";
+import { getPlan, isPlanId, planLabel } from "@/lib/plans";
 import {
   createPaymentReference,
   isPaymentMethod,
+  methodLabel,
 } from "@/lib/payouts";
+import { notifyPaymentSubmitted } from "@/lib/resend";
 import type { SubscriptionPaymentRow } from "@/lib/types";
 
 const OPEN_STATUSES = ["awaiting_payment", "pending_review"] as const;
@@ -188,7 +191,7 @@ export async function markPaymentSent(formData: FormData) {
 
   const { data: payment, error: loadError } = await supabase
     .from("subscription_payments")
-    .select("id, status, user_id")
+    .select("id, status, user_id, plan, amount_usd, reference")
     .eq("id", paymentId)
     .maybeSingle();
 
@@ -221,6 +224,37 @@ export async function markPaymentSent(formData: FormData) {
 
   if (error) {
     return { error: error.message };
+  }
+
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("full_name, phone")
+    .eq("id", user.id)
+    .maybeSingle();
+
+  try {
+    const memberName =
+      typeof profile?.full_name === "string" && profile.full_name.trim()
+        ? profile.full_name.trim()
+        : "Member";
+    const memberPhone =
+      typeof profile?.phone === "string" && profile.phone.trim()
+        ? profile.phone.trim()
+        : null;
+
+    await notifyPaymentSubmitted({
+      memberName,
+      memberEmail: user.email ?? "unknown",
+      memberPhone,
+      memberId: user.id,
+      plan: planLabel(payment.plan),
+      amountLabel: formatUsd(payment.amount_usd) ?? String(payment.amount_usd),
+      methodLabel: methodLabel(method),
+      reference: payment.reference,
+      payerNote: payerNote || null,
+    });
+  } catch (error) {
+    console.warn("Payment notice failed after pending_review:", error);
   }
 
   revalidateMembership();
