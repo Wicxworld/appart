@@ -59,7 +59,7 @@ export default async function SearchesPage({
         title="Searches"
         description={
           query
-            ? `Showing searches matching \u201c${query}\u201d.`
+            ? `Showing searches matching "${query}".`
             : "Every brief you have opened, with the latest run status."
         }
         action={

@@ -83,7 +83,7 @@ export default async function SearchDetailPage({
             href="/searches"
             className="text-[11px] uppercase tracking-[0.22em] text-ivory/70 transition hover:text-ivory"
           >
-            \u2190 All searches
+            Back to all searches
           </Link>
           <div className="mt-6 flex flex-wrap items-center gap-4">
             <StatusPill status={brief.status} />
@@ -152,7 +152,7 @@ export default async function SearchDetailPage({
                     </span>
                   </div>
                   <p className="mt-3 text-sm text-muted">
-                    Scanned {run.listings_scanned} \u00b7 matches {run.matches_found}
+                    Scanned {run.listings_scanned} / matches {run.matches_found}
                   </p>
                   {run.log ? (
                     <p className="mt-2 text-sm leading-6">{run.log}</p>

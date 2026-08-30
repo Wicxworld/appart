@@ -102,10 +102,10 @@ export default async function AdminPage() {
                         </Link>
                       </td>
                       <td className="px-5 py-4 text-muted">
-                        {formatUsd(row.budget_max) ?? "\u2014"}
+                        {formatUsd(row.budget_max) ?? "-"}
                       </td>
                       <td className="px-5 py-4 text-muted">
-                        {row.bedrooms ?? "\u2014"}
+                        {row.bedrooms ?? "-"}
                       </td>
                       <td className="px-5 py-4">
                         <StatusPill status={row.status} />
@@ -123,7 +123,7 @@ export default async function AdminPage() {
 
         <p className="mt-12 max-w-2xl text-sm leading-6 text-muted">
           Admin-only. Matching, inventory ingest, and Stripe are still follow-up
-          work. Counts use the signed-in server client with admin RLS \u2014 nothing
+          work. Counts use the signed-in server client with admin RLS - nothing
           here elevates to the service role.
         </p>
       </div>
