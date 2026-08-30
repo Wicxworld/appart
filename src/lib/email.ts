@@ -1,12 +1,13 @@
 export const PAYMENT_NOTIFY_TO = "wicxworld@gmail.com";
-export const ADMIN_PAYMENTS_URL =
-  "https://appart-lilac.vercel.app/admin#payments";
+export const ADMIN_PAYMENTS_URL = "https://appart-lilac.vercel.app/admin";
 
 const DEFAULT_FROM = "Appart <onboarding@resend.dev>";
 
 export type PaymentNotifyInput = {
   memberEmail: string;
   memberName: string;
+  memberPhone: string | null;
+  memberId: string;
   plan: string;
   amountUsd: string;
   method: string;
@@ -21,33 +22,32 @@ function escapeHtml(value: string) {
     .replaceAll('"', "&quot;");
 }
 
+function noticeRows(input: PaymentNotifyInput) {
+  return [
+    ["Member", input.memberName],
+    ["Email", input.memberEmail],
+    ["Phone", input.memberPhone || "—"],
+    ["Member ID", input.memberId],
+    ["Plan", input.plan],
+    ["Amount", input.amountUsd],
+    ["Method", input.method],
+    ["Reference", input.reference],
+  ] as const;
+}
+
 function renderText(input: PaymentNotifyInput) {
   return [
     "A member marked a membership payment as sent.",
     "",
-    `Member: ${input.memberName}`,
-    `Email: ${input.memberEmail}`,
-    `Plan: ${input.plan}`,
-    `Amount: ${input.amountUsd} USD`,
-    `Method: ${input.method}`,
-    `Reference: ${input.reference}`,
+    ...noticeRows(input).map(([label, value]) => `${label}: ${value}`),
     "",
-    "Review it in Admin → Payments:",
+    "Review it in Admin:",
     ADMIN_PAYMENTS_URL,
   ].join("\n");
 }
 
 function renderHtml(input: PaymentNotifyInput) {
-  const rows: [string, string][] = [
-    ["Member", input.memberName],
-    ["Email", input.memberEmail],
-    ["Plan", input.plan],
-    ["Amount (USD)", input.amountUsd],
-    ["Method", input.method],
-    ["Reference", input.reference],
-  ];
-
-  const table = rows
+  const table = noticeRows(input)
     .map(
       ([label, value]) =>
         `<tr>
@@ -64,11 +64,11 @@ function renderHtml(input: PaymentNotifyInput) {
       <p style="margin:0;font-family:ui-sans-serif,system-ui,sans-serif;font-size:11px;letter-spacing:0.28em;text-transform:uppercase;color:#b08d57;">Appart</p>
       <h1 style="margin:16px 0 0;font-family:Georgia,serif;font-weight:normal;font-size:32px;color:#1c1914;">Payment marked sent</h1>
       <p style="margin:16px 0 0;font-family:ui-sans-serif,system-ui,sans-serif;font-size:14px;line-height:1.6;color:#6b6358;">
-        A member says they have paid. Confirm or reject it in Admin → Payments. Membership stays unpaid until you confirm.
+        A member says they have paid. Confirm or reject it in Admin. Membership stays unpaid until you confirm.
       </p>
       <table style="width:100%;margin-top:28px;border-collapse:collapse;">${table}</table>
       <p style="margin:32px 0 0;">
-        <a href="${ADMIN_PAYMENTS_URL}" style="display:inline-block;background:#1c1914;color:#f4efe6;padding:14px 22px;text-decoration:none;letter-spacing:0.2em;text-transform:uppercase;font-size:11px;font-family:ui-sans-serif,system-ui,sans-serif;">Open Payments</a>
+        <a href="${ADMIN_PAYMENTS_URL}" style="display:inline-block;background:#1c1914;color:#f4efe6;padding:14px 22px;text-decoration:none;letter-spacing:0.2em;text-transform:uppercase;font-size:11px;font-family:ui-sans-serif,system-ui,sans-serif;">Open Admin</a>
       </p>
       <p style="margin:20px 0 0;font-family:ui-sans-serif,system-ui,sans-serif;font-size:12px;color:#6b6358;">
         ${ADMIN_PAYMENTS_URL}
@@ -132,8 +132,7 @@ export async function sendPaymentMarkedEmail(
     console.error("[appart] Resend payment email failed:", error);
     return {
       sent: false,
-      warning:
-        "Payment recorded, but the operator email could not be sent.",
+      warning: "Payment recorded, but the operator email could not be sent.",
     };
   }
 }
