@@ -31,3 +31,18 @@ export type ProfileRow = {
   notification_matches: boolean;
   created_at: string;
 };
+
+export type SubscriptionPaymentRow = {
+  id: string;
+  user_id: string;
+  plan: string;
+  amount_usd: number | string;
+  method: string;
+  reference: string;
+  status: string;
+  payer_note: string | null;
+  reviewed_by: string | null;
+  reviewed_at: string | null;
+  created_at: string;
+  updated_at: string;
+};
