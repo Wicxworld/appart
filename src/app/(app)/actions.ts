@@ -2,7 +2,21 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
-import { isPlanId } from "@/lib/plans";
+import { getPlan, isPlanId } from "@/lib/plans";
+import {
+  createPaymentReference,
+  isPaymentMethod,
+} from "@/lib/payouts";
+import type { SubscriptionPaymentRow } from "@/lib/types";
+
+const OPEN_STATUSES = ["awaiting_payment", "pending_review"] as const;
+
+function revalidateMembership() {
+  revalidatePath("/plans", "layout");
+  revalidatePath("/dashboard");
+  revalidatePath("/profile");
+  revalidatePath("/admin");
+}
 
 export async function updateDisplayName(formData: FormData) {
   const supabase = await createClient();
@@ -60,7 +74,97 @@ export async function updateNotificationPrefs(formData: FormData) {
   return { error: null };
 }
 
-export async function selectPlan(planId: string) {
+export async function startPlanPayment(planId: string) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return { error: "You need to sign in first.", id: null };
+  }
+
+  if (!isPlanId(planId)) {
+    return { error: "Choose Essential, Priority, or Executive.", id: null };
+  }
+
+  const plan = getPlan(planId);
+  if (!plan) {
+    return { error: "Choose Essential, Priority, or Executive.", id: null };
+  }
+
+  const { data: openRows, error: openError } = await supabase
+    .from("subscription_payments")
+    .select("id, plan, status")
+    .eq("user_id", user.id)
+    .in("status", [...OPEN_STATUSES]);
+
+  if (openError) {
+    return { error: openError.message, id: null };
+  }
+
+  const open = (openRows ?? []) as Pick<
+    SubscriptionPaymentRow,
+    "id" | "plan" | "status"
+  >[];
+
+  const matching = open.find((row) => row.plan === planId);
+  if (matching) {
+    return { error: null, id: matching.id };
+  }
+
+  const pendingReview = open.find((row) => row.status === "pending_review");
+  if (pendingReview) {
+    return {
+      error:
+        "You already have a payment waiting for review. Wait for confirmation or open that payment to check the status.",
+      id: pendingReview.id,
+    };
+  }
+
+  const awaiting = open.filter((row) => row.status === "awaiting_payment");
+  if (awaiting.length > 0) {
+    const { error: cancelError } = await supabase
+      .from("subscription_payments")
+      .update({ status: "cancelled" })
+      .eq("user_id", user.id)
+      .eq("status", "awaiting_payment");
+
+    if (cancelError) {
+      return { error: cancelError.message, id: null };
+    }
+  }
+
+  let lastError = "Could not create the payment.";
+  for (let attempt = 0; attempt < 4; attempt += 1) {
+    const { data, error } = await supabase
+      .from("subscription_payments")
+      .insert({
+        user_id: user.id,
+        plan: planId,
+        amount_usd: plan.price,
+        method: "btc",
+        reference: createPaymentReference(),
+        status: "awaiting_payment",
+      })
+      .select("id")
+      .single();
+
+    if (!error && data?.id) {
+      revalidateMembership();
+      return { error: null, id: data.id as string };
+    }
+
+    lastError = error?.message ?? lastError;
+    if (error && !error.message.toLowerCase().includes("duplicate")) {
+      return { error: lastError, id: null };
+    }
+  }
+
+  return { error: lastError, id: null };
+}
+
+export async function markPaymentSent(formData: FormData) {
   const supabase = await createClient();
   const {
     data: { user },
@@ -70,21 +174,55 @@ export async function selectPlan(planId: string) {
     return { error: "You need to sign in first." };
   }
 
-  if (!isPlanId(planId)) {
-    return { error: "Choose Essential, Priority, or Executive." };
+  const paymentId = String(formData.get("payment_id") ?? "").trim();
+  const method = String(formData.get("method") ?? "").trim();
+  const payerNote = String(formData.get("payer_note") ?? "").trim();
+
+  if (!paymentId) {
+    return { error: "Payment is missing." };
+  }
+
+  if (!isPaymentMethod(method)) {
+    return { error: "Choose Bitcoin or a Lead Bank transfer." };
+  }
+
+  const { data: payment, error: loadError } = await supabase
+    .from("subscription_payments")
+    .select("id, status, user_id")
+    .eq("id", paymentId)
+    .maybeSingle();
+
+  if (loadError) {
+    return { error: loadError.message };
+  }
+
+  if (!payment || payment.user_id !== user.id) {
+    return { error: "Payment not found." };
+  }
+
+  if (payment.status === "pending_review") {
+    return { error: null };
+  }
+
+  if (payment.status !== "awaiting_payment") {
+    return { error: "This payment can no longer be marked as sent." };
   }
 
   const { error } = await supabase
-    .from("profiles")
-    .update({ plan: planId })
-    .eq("id", user.id);
+    .from("subscription_payments")
+    .update({
+      method,
+      payer_note: payerNote || null,
+      status: "pending_review",
+    })
+    .eq("id", paymentId)
+    .eq("user_id", user.id)
+    .eq("status", "awaiting_payment");
 
   if (error) {
     return { error: error.message };
   }
 
-  revalidatePath("/plans");
-  revalidatePath("/dashboard");
-  revalidatePath("/profile");
+  revalidateMembership();
   return { error: null };
 }
