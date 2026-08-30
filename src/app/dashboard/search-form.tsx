@@ -3,6 +3,9 @@
 import { FormEvent, useState } from "react";
 import { createSearchRequest } from "./actions";
 
+const field =
+  "w-full border-0 border-b border-ink/20 bg-transparent px-0 py-3 text-sm outline-none transition placeholder:text-ink/35 focus:border-bronze";
+
 export function SearchForm() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -26,10 +29,10 @@ export function SearchForm() {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-5">
-      <div className="grid gap-5 sm:grid-cols-2">
+    <form onSubmit={handleSubmit} className="space-y-8">
+      <div className="grid gap-8 sm:grid-cols-2">
         <div>
-          <label htmlFor="city" className="mb-2 block text-sm font-medium">
+          <label htmlFor="city" className="mb-2 block text-[11px] uppercase tracking-[0.22em] text-muted">
             City
           </label>
           <input
@@ -37,12 +40,12 @@ export function SearchForm() {
             name="city"
             required
             placeholder="Lagos"
-            className="w-full rounded-xl border border-white/10 bg-slate-900 px-4 py-3 text-sm outline-none transition placeholder:text-slate-600 focus:border-blue-400"
+            className={field}
           />
         </div>
 
         <div>
-          <label htmlFor="budget_max" className="mb-2 block text-sm font-medium">
+          <label htmlFor="budget_max" className="mb-2 block text-[11px] uppercase tracking-[0.22em] text-muted">
             Max yearly rent (USD)
           </label>
           <input
@@ -51,12 +54,12 @@ export function SearchForm() {
             type="number"
             min="0"
             placeholder="2500"
-            className="w-full rounded-xl border border-white/10 bg-slate-900 px-4 py-3 text-sm outline-none transition placeholder:text-slate-600 focus:border-blue-400"
+            className={field}
           />
         </div>
 
         <div>
-          <label htmlFor="bedrooms" className="mb-2 block text-sm font-medium">
+          <label htmlFor="bedrooms" className="mb-2 block text-[11px] uppercase tracking-[0.22em] text-muted">
             Bedrooms
           </label>
           <input
@@ -65,20 +68,20 @@ export function SearchForm() {
             type="number"
             min="0"
             placeholder="2"
-            className="w-full rounded-xl border border-white/10 bg-slate-900 px-4 py-3 text-sm outline-none transition placeholder:text-slate-600 focus:border-blue-400"
+            className={field}
           />
         </div>
 
         <div className="sm:col-span-2">
-          <label htmlFor="notes" className="mb-2 block text-sm font-medium">
-            Requirements
+          <label htmlFor="notes" className="mb-2 block text-[11px] uppercase tracking-[0.22em] text-muted">
+            The brief
           </label>
           <textarea
             id="notes"
             name="notes"
             rows={3}
-            placeholder="Estate, generator, close to the island, unfurnished..."
-            className="w-full rounded-xl border border-white/10 bg-slate-900 px-4 py-3 text-sm outline-none transition placeholder:text-slate-600 focus:border-blue-400"
+            placeholder="Light, estate, generator, close to the island, unfurnished..."
+            className={field}
           />
         </div>
       </div>
@@ -86,7 +89,7 @@ export function SearchForm() {
       {error && (
         <div
           role="alert"
-          className="rounded-xl border border-red-400/20 bg-red-400/10 px-4 py-3 text-sm text-red-300"
+          className="border border-red-800/20 bg-red-800/5 px-4 py-3 text-sm text-red-900"
         >
           {error}
         </div>
@@ -95,9 +98,9 @@ export function SearchForm() {
       <button
         type="submit"
         disabled={loading}
-        className="rounded-xl bg-blue-500 px-5 py-3.5 text-sm font-semibold text-white transition hover:bg-blue-400 disabled:cursor-not-allowed disabled:opacity-50"
+        className="bg-ink px-8 py-4 text-[11px] font-semibold uppercase tracking-[0.24em] text-ivory transition hover:bg-bronze hover:text-ink disabled:cursor-not-allowed disabled:opacity-50"
       >
-        {loading ? "Starting search..." : "Start search"}
+        {loading ? "Opening search..." : "Open a search"}
       </button>
     </form>
   );

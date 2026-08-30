@@ -9,6 +9,15 @@ const nextConfig: NextConfig = {
       process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ??
       "sb_publishable_00GGQPDlq-RdAAqZI-6-Dw_n0-ZbDlY",
   },
+  images: {
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "images.unsplash.com",
+        pathname: "/**",
+      },
+    ],
+  },
 };
 
 export default nextConfig;
