@@ -3,6 +3,11 @@
 import Link from "next/link";
 import { FormEvent, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
+import { AuthShell } from "@/components/auth-shell";
+import { photos } from "@/lib/photos";
+
+const field =
+  "w-full border-0 border-b border-ink/20 bg-transparent px-0 py-3 text-sm outline-none transition placeholder:text-ink/35 focus:border-bronze";
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("");
@@ -43,80 +48,60 @@ export default function ForgotPasswordPage() {
   }
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-slate-950 px-6 py-12 text-white">
-      <div className="w-full max-w-md">
-        <Link href="/" className="text-2xl font-bold tracking-tight">
-          appart<span className="text-blue-400">.</span>
-        </Link>
+    <AuthShell image={photos.kitchen} caption="We will send a quiet reset link to your email.">
+      <p className="text-[11px] uppercase tracking-[0.28em] text-bronze">
+        Account
+      </p>
+      <h1 className="mt-4 font-display text-4xl">Reset your password</h1>
+      <p className="mt-3 text-sm leading-6 text-muted">
+        Enter your email and we will send a secure reset link.
+      </p>
 
-        <div className="mt-8 rounded-2xl border border-white/10 bg-white/[0.03] p-8">
-          <h1 className="text-3xl font-bold">Reset your password</h1>
-
-          <p className="mt-3 text-sm leading-6 text-slate-400">
-            Enter your email and we&apos;ll send you a secure password reset
-            link.
-          </p>
-
-          <form onSubmit={handleSubmit} className="mt-8 space-y-5">
-            <div>
-              <label
-                htmlFor="email"
-                className="mb-2 block text-sm font-medium"
-              >
-                Email address
-              </label>
-
-              <input
-                id="email"
-                name="email"
-                type="email"
-                required
-                autoComplete="email"
-                value={email}
-                onChange={(event) => setEmail(event.target.value)}
-                className="w-full rounded-xl border border-white/10 bg-slate-900 px-4 py-3 text-sm outline-none transition placeholder:text-slate-600 focus:border-blue-400"
-                placeholder="you@example.com"
-              />
-            </div>
-
-            {error && (
-              <div
-                role="alert"
-                className="rounded-xl border border-red-400/20 bg-red-400/10 px-4 py-3 text-sm text-red-300"
-              >
-                {error}
-              </div>
-            )}
-
-            {message && (
-              <div
-                role="status"
-                className="rounded-xl border border-emerald-400/20 bg-emerald-400/10 px-4 py-3 text-sm text-emerald-300"
-              >
-                {message}
-              </div>
-            )}
-
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full rounded-xl bg-blue-500 px-5 py-3.5 text-sm font-semibold text-white transition hover:bg-blue-400 disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              {loading ? "Sending..." : "Send reset link"}
-            </button>
-          </form>
-
-          <p className="mt-6 text-center text-sm text-slate-400">
-            Remember your password?{" "}
-            <Link
-              href="/auth/sign-in"
-              className="font-medium text-blue-400 hover:text-blue-300"
-            >
-              Sign in
-            </Link>
-          </p>
+      <form onSubmit={handleSubmit} className="mt-10 space-y-7">
+        <div>
+          <label htmlFor="email" className="mb-2 block text-[11px] uppercase tracking-[0.22em] text-muted">
+            Email
+          </label>
+          <input
+            id="email"
+            name="email"
+            type="email"
+            required
+            autoComplete="email"
+            value={email}
+            onChange={(event) => setEmail(event.target.value)}
+            className={field}
+            placeholder="you@example.com"
+          />
         </div>
-      </div>
-    </main>
+
+        {error && (
+          <div role="alert" className="border border-red-800/20 bg-red-800/5 px-4 py-3 text-sm text-red-900">
+            {error}
+          </div>
+        )}
+
+        {message && (
+          <div role="status" className="border border-forest/20 bg-forest/5 px-4 py-3 text-sm text-forest">
+            {message}
+          </div>
+        )}
+
+        <button
+          type="submit"
+          disabled={loading}
+          className="w-full bg-ink px-5 py-4 text-[11px] font-semibold uppercase tracking-[0.24em] text-ivory transition hover:bg-bronze hover:text-ink disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          {loading ? "Sending..." : "Send reset link"}
+        </button>
+      </form>
+
+      <p className="mt-8 text-sm text-muted">
+        Remembered it?{" "}
+        <Link href="/auth/sign-in" className="text-ink underline decoration-bronze underline-offset-4">
+          Sign in
+        </Link>
+      </p>
+    </AuthShell>
   );
 }

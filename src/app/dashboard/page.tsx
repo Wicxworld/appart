@@ -1,6 +1,8 @@
-import Link from "next/link";
+import Image from "next/image";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { BrandMark } from "@/components/brand-mark";
+import { photos } from "@/lib/photos";
 import { SearchForm } from "./search-form";
 import { SignOutButton } from "./sign-out-button";
 
@@ -57,7 +59,7 @@ export default async function DashboardPage() {
   const searchList = (searches ?? []) as SearchRequest[];
   const searchIds = searchList.map((search) => search.id);
 
-  let runsBySearch = new Map<string, SearchRun>();
+  const runsBySearch = new Map<string, SearchRun>();
 
   if (searchIds.length > 0) {
     const { data: runs } = await supabase
@@ -76,83 +78,106 @@ export default async function DashboardPage() {
   }
 
   return (
-    <main className="min-h-screen bg-slate-950 text-white">
-      <header className="border-b border-white/10">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-5 lg:px-8">
-          <Link href="/" className="text-2xl font-bold tracking-tight">
-            appart<span className="text-blue-400">.</span>
-          </Link>
+    <main className="min-h-screen bg-ivory text-ink">
+      <header className="relative overflow-hidden">
+        <div className="absolute inset-0">
+          <Image
+            src={photos.living}
+            alt=""
+            fill
+            sizes="100vw"
+            className="object-cover"
+            priority
+          />
+          <div className="absolute inset-0 bg-ink/70" />
+        </div>
+        <div className="relative mx-auto flex max-w-7xl items-center justify-between px-6 py-6 lg:px-10">
+          <BrandMark />
           <SignOutButton />
+        </div>
+        <div className="relative mx-auto max-w-7xl px-6 pb-16 pt-10 lg:px-10 lg:pb-20">
+          <p className="text-[11px] font-medium uppercase tracking-[0.32em] text-bronze">
+            Your private search
+          </p>
+          <h1 className="mt-4 font-display text-4xl text-ivory sm:text-6xl">
+            Welcome back, {displayName}.
+          </h1>
+          <p className="mt-5 max-w-xl text-sm leading-6 text-ivory/75">
+            Write the brief. Each search is stored, and a run log waits here
+            until matching is live.
+          </p>
         </div>
       </header>
 
-      <div className="mx-auto max-w-7xl px-6 py-12 lg:px-8">
-        <p className="text-sm font-semibold uppercase tracking-[0.2em] text-blue-400">
-          Your search
-        </p>
-        <h1 className="mt-4 text-3xl font-bold tracking-tight sm:text-4xl">
-          Welcome back, {displayName}.
-        </h1>
-        <p className="mt-4 max-w-2xl text-slate-400">
-          Tell Appart what you need. Each search is stored, and a run log is
-          created so results can come back here once matching is live.
-        </p>
-
-        <section className="mt-10 rounded-2xl border border-white/10 bg-white/[0.03] p-7">
-          <h2 className="text-xl font-semibold">Start a new search</h2>
-          <p className="mt-2 text-sm text-slate-400">
-            This saves an active search against your account.
+      <div className="mx-auto max-w-7xl px-6 py-14 lg:px-10">
+        <section className="border border-ink/10 bg-paper p-8 lg:p-12">
+          <p className="text-[11px] uppercase tracking-[0.28em] text-bronze">
+            New brief
           </p>
-          <div className="mt-6">
+          <h2 className="mt-3 font-display text-3xl">Open a search</h2>
+          <p className="mt-3 max-w-xl text-sm text-muted">
+            City, budget, rooms, and the details that actually matter.
+          </p>
+          <div className="mt-10">
             <SearchForm />
           </div>
         </section>
 
-        <section className="mt-10">
-          <h2 className="text-xl font-semibold">Active and recent searches</h2>
+        <section className="mt-16">
+          <h2 className="font-display text-3xl">Active and recent searches</h2>
 
           {searchList.length === 0 ? (
-            <p className="mt-4 rounded-2xl border border-dashed border-white/10 px-6 py-10 text-slate-400">
-              No searches yet. Start one above and it will show up here with its
+            <p className="mt-6 border border-dashed border-ink/15 px-6 py-12 text-muted">
+              No searches yet. Open one above and it will appear here with its
               run log.
             </p>
           ) : (
-            <ul className="mt-6 space-y-4">
-              {searchList.map((search) => {
+            <ul className="mt-8 grid gap-6 lg:grid-cols-2">
+              {searchList.map((search, index) => {
                 const run = runsBySearch.get(search.id);
+                const image =
+                  [photos.penthouse, photos.kitchen, photos.loft, photos.terrace][
+                    index % 4
+                  ];
                 return (
-                  <li
-                    key={search.id}
-                    className="rounded-2xl border border-white/10 bg-white/[0.03] p-6"
-                  >
-                    <div className="flex flex-wrap items-center justify-between gap-3">
-                      <h3 className="text-lg font-semibold">{search.city}</h3>
-                      <span className="rounded-full border border-blue-400/30 bg-blue-400/10 px-3 py-1 text-xs font-medium text-blue-300">
-                        {search.status}
-                      </span>
+                  <li key={search.id} className="overflow-hidden border border-ink/10 bg-paper">
+                    <div className="relative h-40">
+                      <Image
+                        src={image}
+                        alt=""
+                        fill
+                        sizes="(min-width: 1024px) 40vw, 100vw"
+                        className="object-cover"
+                      />
                     </div>
-                    <p className="mt-3 text-sm text-slate-400">
-                      {search.bedrooms != null
-                        ? `${search.bedrooms} bedroom${search.bedrooms === 1 ? "" : "s"}`
-                        : "Any bedrooms"}
-                      {search.budget_max != null
-                        ? ` · up to $${Number(search.budget_max).toLocaleString("en-US")}`
-                        : ""}
-                    </p>
-                    {search.notes && (
-                      <p className="mt-2 text-sm text-slate-300">{search.notes}</p>
-                    )}
-                    {run && (
-                      <div className="mt-4 rounded-xl bg-slate-900/80 px-4 py-3 text-sm text-slate-300">
-                        <p className="font-medium text-slate-200">
-                          Latest run: {run.status} · scanned {run.listings_scanned} ·
-                          matches {run.matches_found}
-                        </p>
-                        {run.log && (
-                          <p className="mt-1 text-slate-400">{run.log}</p>
-                        )}
+                    <div className="p-6">
+                      <div className="flex items-start justify-between gap-3">
+                        <h3 className="font-display text-2xl">{search.city}</h3>
+                        <span className="text-[10px] uppercase tracking-[0.22em] text-bronze">
+                          {search.status}
+                        </span>
                       </div>
-                    )}
+                      <p className="mt-3 text-sm text-muted">
+                        {search.bedrooms != null
+                          ? `${search.bedrooms} bedroom${search.bedrooms === 1 ? "" : "s"}`
+                          : "Any bedrooms"}
+                        {search.budget_max != null
+                          ? ` · up to $${Number(search.budget_max).toLocaleString("en-US")}`
+                          : ""}
+                      </p>
+                      {search.notes && (
+                        <p className="mt-3 text-sm leading-6">{search.notes}</p>
+                      )}
+                      {run && (
+                        <div className="mt-5 border-t border-ink/10 pt-4 text-sm text-muted">
+                          <p>
+                            Latest run: {run.status} · scanned{" "}
+                            {run.listings_scanned} · matches {run.matches_found}
+                          </p>
+                          {run.log && <p className="mt-1">{run.log}</p>}
+                        </div>
+                      )}
+                    </div>
                   </li>
                 );
               })}
