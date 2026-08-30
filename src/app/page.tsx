@@ -21,7 +21,7 @@ const features = [
 const plans = [
   {
     name: "Essential",
-    price: "₦25,000",
+    price: "$19",
     description: "For clients starting a focused apartment search.",
     features: [
       "Personalized apartment requirements",
@@ -31,7 +31,7 @@ const plans = [
   },
   {
     name: "Priority",
-    price: "₦50,000",
+    price: "$37",
     description: "For clients who want a more active search experience.",
     features: [
       "Everything in Essential",
@@ -42,7 +42,7 @@ const plans = [
   },
   {
     name: "Executive",
-    price: "₦100,000",
+    price: "$75",
     description: "For complex or highly specific apartment requirements.",
     features: [
       "Everything in Priority",
@@ -213,8 +213,7 @@ export default function Home() {
             </h2>
 
             <p className="mt-5 text-slate-400">
-              Plans can be configured from the Appart admin system as the
-              product evolves.
+              Plans are billed in USD.
             </p>
           </div>
 

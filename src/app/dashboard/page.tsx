@@ -136,7 +136,7 @@ export default async function DashboardPage() {
                         ? `${search.bedrooms} bedroom${search.bedrooms === 1 ? "" : "s"}`
                         : "Any bedrooms"}
                       {search.budget_max != null
-                        ? ` · up to ₦${Number(search.budget_max).toLocaleString("en-NG")}`
+                        ? ` · up to $${Number(search.budget_max).toLocaleString("en-US")}`
                         : ""}
                     </p>
                     {search.notes && (
