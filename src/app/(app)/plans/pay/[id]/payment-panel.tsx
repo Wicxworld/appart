@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import { formatUsd } from "@/lib/format";
 import { planLabel } from "@/lib/plans";
 import {
-  isPaymentMethod,
   methodLabel,
   paymentStatusLabel,
   payouts,
@@ -16,12 +15,14 @@ import { StatusPill } from "@/components/status-pill";
 import { markPaymentSent } from "../../../actions";
 import type { SubscriptionPaymentRow } from "@/lib/types";
 
-export function PaymentPanel({ payment }: { payment: SubscriptionPaymentRow }) {
+export function PaymentPanel({
+  payment,
+  method,
+}: {
+  payment: SubscriptionPaymentRow;
+  method: PaymentMethod;
+}) {
   const router = useRouter();
-  const initialMethod: PaymentMethod = isPaymentMethod(payment.method)
-    ? payment.method
-    : "btc";
-  const [method, setMethod] = useState<PaymentMethod>(initialMethod);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -41,38 +42,8 @@ export function PaymentPanel({ payment }: { payment: SubscriptionPaymentRow }) {
     router.refresh();
   }
 
-  if (payment.status === "pending_review") {
-    return (
-      <ThankYou
-        payment={payment}
-        title="Thank you. We have your payment."
-        body="An Appart operator will confirm the transfer. Your plan stays unpaid until then — do not send again unless we ask."
-      />
-    );
-  }
-
-  if (payment.status === "paid") {
-    return (
-      <ThankYou
-        payment={payment}
-        title="Payment confirmed."
-        body="This membership is now active on your profile."
-      />
-    );
-  }
-
-  if (payment.status === "rejected" || payment.status === "cancelled") {
-    return (
-      <ThankYou
-        payment={payment}
-        title={
-          payment.status === "rejected"
-            ? "This payment was not confirmed."
-            : "This payment was cancelled."
-        }
-        body="Open Plans to start a new Bitcoin or Lead Bank transfer if you still want this membership."
-      />
-    );
+  if (payment.status !== "awaiting_payment") {
+    return <PaymentThankYou payment={payment} />;
   }
 
   return (
@@ -92,36 +63,6 @@ export function PaymentPanel({ payment }: { payment: SubscriptionPaymentRow }) {
         <StatusPill status={payment.status} />
       </div>
 
-      <div className="mt-10">
-        <p className="text-[11px] uppercase tracking-[0.22em] text-muted">
-          Payment method
-        </p>
-        <div className="mt-4 grid gap-3 sm:grid-cols-2">
-          {(["btc", "bank"] as const).map((id) => {
-            const selected = method === id;
-            return (
-              <button
-                key={id}
-                type="button"
-                onClick={() => setMethod(id)}
-                className={
-                  selected
-                    ? "border border-ink bg-ink px-5 py-4 text-left text-ivory"
-                    : "border border-ink/15 bg-ivory px-5 py-4 text-left transition hover:border-ink/40"
-                }
-              >
-                <p className="text-[11px] uppercase tracking-[0.2em] text-bronze">
-                  {id === "btc" ? "Bitcoin" : "Bank"}
-                </p>
-                <p className="mt-2 font-display text-2xl">
-                  {id === "btc" ? "BTC on-chain" : "Lead Bank"}
-                </p>
-              </button>
-            );
-          })}
-        </div>
-      </div>
-
       <div className="mt-10 space-y-5">
         <CopyField
           label="Payment reference"
@@ -132,6 +73,7 @@ export function PaymentPanel({ payment }: { payment: SubscriptionPaymentRow }) {
         {method === "btc" ? (
           <>
             <CopyField label="BTC address" value={payouts.btc.address} />
+            <CopyField label="Network" value={payouts.btc.network} />
             <div className="border border-red-800/20 bg-red-800/5 px-4 py-3 text-sm leading-6 text-red-900">
               {payouts.btc.warning}
             </div>
@@ -179,7 +121,7 @@ export function PaymentPanel({ payment }: { payment: SubscriptionPaymentRow }) {
         disabled={loading}
         className="mt-10 w-full bg-ink px-8 py-4 text-[11px] font-semibold uppercase tracking-[0.24em] text-ivory transition hover:bg-bronze hover:text-ink disabled:cursor-not-allowed disabled:opacity-50"
       >
-        {loading ? "Recording..." : "I've sent the payment"}
+        {loading ? "Recording..." : "I've paid"}
       </button>
       <p className="mt-4 text-center text-xs leading-5 text-muted">
         Paying with {methodLabel(method)}. Your plan is not activated until we
@@ -189,20 +131,18 @@ export function PaymentPanel({ payment }: { payment: SubscriptionPaymentRow }) {
   );
 }
 
-function ThankYou({
+export function PaymentThankYou({
   payment,
-  title,
-  body,
 }: {
   payment: SubscriptionPaymentRow;
-  title: string;
-  body: string;
 }) {
+  const copy = thankYouCopy(payment.status);
+
   return (
     <div className="border border-ink/10 bg-paper p-8 lg:p-10">
       <StatusPill status={payment.status} />
-      <h2 className="mt-6 font-display text-4xl">{title}</h2>
-      <p className="mt-4 max-w-xl text-sm leading-6 text-muted">{body}</p>
+      <h2 className="mt-6 font-display text-4xl">{copy.title}</h2>
+      <p className="mt-4 max-w-xl text-sm leading-6 text-muted">{copy.body}</p>
       <dl className="mt-10 grid gap-6 sm:grid-cols-2">
         <div>
           <dt className="text-[11px] uppercase tracking-[0.2em] text-muted">
@@ -234,4 +174,29 @@ function ThankYou({
       </div>
     </div>
   );
+}
+
+function thankYouCopy(status: string) {
+  if (status === "pending_review") {
+    return {
+      title: "Thank you. We have your payment.",
+      body: "An Appart operator will confirm the transfer. Your plan stays unpaid until then — do not send again unless we ask.",
+    };
+  }
+  if (status === "paid") {
+    return {
+      title: "Payment confirmed.",
+      body: "This membership is now active on your profile.",
+    };
+  }
+  if (status === "rejected") {
+    return {
+      title: "This payment was not confirmed.",
+      body: "Open Plans to start a new Bitcoin or Lead Bank transfer if you still want this membership.",
+    };
+  }
+  return {
+    title: "This payment was cancelled.",
+    body: "Open Plans to start a new Bitcoin or Lead Bank transfer if you still want this membership.",
+  };
 }
