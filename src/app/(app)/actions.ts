@@ -233,7 +233,7 @@ export async function markPaymentSent(formData: FormData) {
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("full_name")
+    .select("full_name, phone")
     .eq("id", user.id)
     .maybeSingle();
 
@@ -241,10 +241,16 @@ export async function markPaymentSent(formData: FormData) {
     (typeof profile?.full_name === "string" && profile.full_name.trim()) ||
     user.email ||
     "Member";
+  const memberPhone =
+    typeof profile?.phone === "string" && profile.phone.trim()
+      ? profile.phone.trim()
+      : null;
 
   const notify = await sendPaymentMarkedEmail({
     memberEmail: user.email ?? "unknown",
     memberName,
+    memberPhone,
+    memberId: user.id,
     plan: planLabel(payment.plan),
     amountUsd: formatUsd(payment.amount_usd) ?? `$${payment.amount_usd}`,
     method: methodLabel(method),
