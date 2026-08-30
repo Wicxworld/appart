@@ -1,12 +1,14 @@
 "use client";
 
 import { FormEvent, useState } from "react";
+import { useRouter } from "next/navigation";
 import { createSearchRequest } from "./actions";
 
 const field =
   "w-full border-0 border-b border-ink/20 bg-transparent px-0 py-3 text-sm outline-none transition placeholder:text-ink/35 focus:border-bronze";
 
-export function SearchForm() {
+export function SearchForm({ defaultCity = "" }: { defaultCity?: string }) {
+  const router = useRouter();
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -26,6 +28,14 @@ export function SearchForm() {
     }
 
     form.reset();
+    if (result.id) {
+      router.push(`/searches/${result.id}`);
+      router.refresh();
+      return;
+    }
+
+    router.push("/searches");
+    router.refresh();
   }
 
   return (
@@ -39,6 +49,7 @@ export function SearchForm() {
             id="city"
             name="city"
             required
+            defaultValue={defaultCity}
             placeholder="New York"
             className={field}
           />
